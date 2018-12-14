@@ -1,0 +1,76 @@
+#!/bin/sh -Cue
+#.help
+# % [REPO]
+#
+# Copy Redo updates.  (For maintenance of red-sh itself.)
+#
+# REPO must be a Redo repository.  Specifying REDO is only optional if it has been provided previously, in which case the last absolute path is reused.
+#
+# Before running, ensure this repository is clean; afterwards, examine (and merge) differences.
+
+fatal() { rc="$1"; shift; printf %s\\n "${0##*/} error: $*" >&2 || true; exit "$rc"; }
+nonfatal() { printf %s\\n "${0##*/}: $*" >&2 || true; }
+
+handle_option() { fatal 64 "unknown option $1"; }
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --) shift; break ;;
+        --*=*) x="${1#--}"; handle_option "${x%%=*}" "${x#*=}"; shift ;;
+        --*) handle_option "${1#--}"; shift ;;
+        -?) handle_option "${1#-}"; shift ;;
+        -?*)
+            v="${1#??}"
+            x="${1%"$v"}"
+            handle_option "${x#-}" "$v"
+            shift
+            ;;
+        *) break ;;
+        esac
+    done
+redo_loc="$(dirname "$0")/.redo-loc"
+case "$#" in
+    0)
+        # shellcheck disable=SC2015
+        [ -s "$redo_loc" ] &&
+        read -r redo <"$redo_loc" &&
+        [ -d "$redo" ] ||
+        fatal 64 'missing REPO argument'
+        ;;
+    1)
+        redo="$(readlink -f "$1")"
+        [ -d "$redo" ] || fatal 65 "not a directory: $redo"
+        printf %s\\n "$redo" >|"$redo_loc"
+        ;;
+    *) fatal 64 'unexpected extra arguments' ;;
+    esac
+
+(cd "$redo"; redo-ifchange "$redo/redo/version/vars") ||
+    fatal 70 'unable to get redo version'
+ver="$(grep '^TAG=' "$redo/redo/version/vars")"
+ver="${ver%'}"
+ver="${ver#*'}"
+nonfatal "redo version: $ver"
+
+cd "$(dirname "$0")"
+[ -d ../selected ] || mkdir ../selected
+copy() {
+    cp "$redo/t/$1" ../work/
+    nonfatal "copied: work/$1"
+    }
+copy dotparams.od
+copy nothing.od
+copy shelltest.od
+mv select select.prev
+{
+    printf %s\\n '#!/bin/sh -ue' 'cd "$(dirname "$0")/../work"'
+    sed -r '0,/^mkdir/d; s/\t/    /g; s/ +$//' "$redo/redo/sh.do"
+    } >select
+chmod a+x select
+cp select select.import
+nonfatal "created: task/select (from $redo/redo/sh.do)"
+if patch -s select ../work/select.patch; then
+    rm select.import select.prev
+    nonfatal 'patched: task/select'
+else
+    nonfatal 'try: diff -u task/select task/select.prev'
+    fi

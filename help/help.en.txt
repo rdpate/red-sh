@@ -1,0 +1,28 @@
+Red Shell
+====
+
+Run task/select to select a shell.  Selection criteria is from [Redo](https://redo.rtfd.io/).  Executable red-sh runs that shell with:
+
+* -C: prevent existing file overwrite with '>' (use '>|' instead)
+* -u: error on unknown variables
+* -e: error on untested command failure
+
+
+Install
+----
+
+Move or copy this entire directory to /opt/red-sh or another directory.  Run task/finalize.  Copy sh to /bin/red-sh.  Use /bin/red-sh as an absolute path for "#!" lines.
+
+    cd /opt
+    git clone https://github.com/rdpate/red-sh.git
+    red-sh/task/select
+    red-sh/task/finalize
+    cp red-sh/red-sh /bin/red-sh
+
+(If task/finalize is not used, symlinks to red-sh will work, but copies will not.)
+
+
+License
+----
+
+Because this is derived from Redo, that [copyright and license](https://github.com/apenwarr/redo/commit/4008ce4a91a1ab0769529e0e7aea3370ff654497) applies (see license.md).  Any original contributions here are licensed under the same license.

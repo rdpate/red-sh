@@ -1,0 +1,38 @@
+--- a/run	2018-12-13 17:16:54.558550089 -0500
++++ b/run	2018-12-13 17:13:56.514674701 -0500
+@@ -17,14 +17,10 @@
+     # shells (like bash and zsh) only go into POSIX-compatible mode if
+     # they have that name.  If they're not in POSIX-compatible mode,
+     # they'll fail the test.
+-    rm -f $1.new/sh
+-    ln -s $FOUND $1.new/sh
+-    SH=$PWD/$1.new/sh
++    rm -f sh
++    ln -s "$FOUND" sh
+
+-    set +e
+-    ( cd ../t && "$SH" shelltest.od ) >shelltest.tmp 2>&1
+-    RV=$?
+-    set -e
++    ./sh shelltest.od >shelltest.tmp 2>&1 && RV=0 || RV=$?
+
+     msgs=
+     crash=
+@@ -49,14 +45,13 @@
+     esac
+ done
+
+-rm -rf $1.new $3
+-
++rm -f ../selected/sh
+ if [ -n "$GOOD" ]; then
+     echo "Selected perfect shell: $GOOD"
+-    ln -s $GOOD $3
++    ln -s "$GOOD" ../selected/sh
+ elif [ -n "$WARN" ]; then
+     echo "Selected mostly good shell: $WARN"
+-    ln -s $WARN $3
++    ln -s "$WARN" ../selected/sh
+ else
+     echo "No good shells found!  Maybe install dash, bash, or zsh."
+     exit 13

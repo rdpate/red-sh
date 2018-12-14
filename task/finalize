@@ -1,0 +1,39 @@
+#!/bin/sh -Cue
+# TODO: should probably replace this with an "install" task
+fatal() { rc="$1"; shift; printf %s\\n "${0##*/} error: $*" >&2 || true; exit "$rc"; }
+squote() {
+    if [ -n "$1" ] && [ x"$(printf %s "$1" | tr -d -c \\055_/0-9A-Za-z)" = x"$1" ]; then
+        printf %s "$1"
+    else
+        printf \'%s\' "$(printf %s "$1" | sed -r s/\'/\'\\\\\'\'/g)"
+        fi
+    }
+
+handle_option() { fatal 64 "unknown option $1"; }
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --) shift; break ;;
+        --*=*) x="${1#--}"; handle_option "${x%%=*}" "${x#*=}"; shift ;;
+        --*) handle_option "${1#--}"; shift ;;
+        -?) handle_option "${1#-}"; shift ;;
+        -?*)
+            v="${1#??}"
+            x="${1%"$v"}"
+            handle_option "${x#-}" "$v"
+            shift
+            ;;
+        *) break ;;
+        esac
+    done
+[ $# = 0 ] || fatal 70 'unexpected arguments'
+
+cd "${0%/*}/.."
+cat <<END >|sh
+#!/bin/sh
+exec $(squote "$(pwd)/selected/sh") -C -u -e "\$@"
+END
+rm -r -f \
+    license.md README.md \
+    task work \
+    .*
+    ;

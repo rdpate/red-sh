@@ -52,7 +52,6 @@ ver="${ver#*'}"
 nonfatal "redo version: $ver"
 
 cd "$(dirname "$0")"
-[ -d ../selected ] || mkdir ../selected
 copy() {
     cp "$redo/t/$1" ../work/
     nonfatal "copied: work/$1"
